@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="static/icon-256.png" alt="Stock Audible Icon" width="128" height="128">
+</p>
+
 # Stock Ticker Audio Announcer
 
 A web application that announces stock prices at specified intervals using text-to-speech.
