@@ -110,4 +110,4 @@ def handle_stop():
 
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', debug=Config.DEBUG, port=5000)
+    socketio.run(app, host='0.0.0.0', debug=Config.DEBUG, port=5005)

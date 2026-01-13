@@ -30,7 +30,7 @@ A web application that announces stock prices at specified intervals using text-
    poetry run python app.py
    ```
 
-4. Open browser to http://localhost:5000
+4. Open browser to http://localhost:5005
 
 ## Accessing from Other Devices on Your Network
 
@@ -42,13 +42,13 @@ The application binds to `0.0.0.0` by default, making it accessible from other d
 
 2. On another device (phone, tablet, another computer) connected to the same WiFi network, open a browser to:
    ```
-   http://YOUR_LOCAL_IP:5000
+   http://YOUR_LOCAL_IP:5005
    ```
-   For example: `http://192.168.1.100:5000`
+   For example: `http://192.168.1.100:5005`
 
 3. The audio will play on the device accessing the app, so you can have announcements on different devices throughout your home or office.
 
-**Security Note**: This makes your app accessible to anyone on your local network. Don't expose port 5000 to the internet or use on untrusted networks.
+**Security Note**: This makes your app accessible to anyone on your local network. Don't expose port 5005 to the internet or use on untrusted networks.
 
 ## Usage
 
