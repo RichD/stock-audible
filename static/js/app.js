@@ -3,55 +3,68 @@ const socket = io();
 
 // DOM elements
 const statusDiv = document.getElementById('status');
-const tickerForm = document.getElementById('ticker-form');
 const tickerInput = document.getElementById('ticker');
-const intervalInput = document.getElementById('interval');
-const startBtn = document.getElementById('start-btn');
-const stopBtn = document.getElementById('stop-btn');
+const intervalSelect = document.getElementById('interval-minutes');
+const announcementToggle = document.getElementById('announcement-toggle');
+const audioStatus = document.getElementById('audio-status');
 const priceDisplay = document.getElementById('price-display');
 const tickerDisplay = document.getElementById('ticker-display');
 const priceValue = document.getElementById('price-value');
 const lastUpdate = document.getElementById('last-update');
-const speechEnabled = document.getElementById('speech-enabled');
 
 // Speech synthesis
 let synth = window.speechSynthesis;
-let isRunning = false;
+let isAnnouncing = false;
 let lastAnnouncement = '';
 
 // Detect mobile Safari
 const isMobileSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
+// Show Mobile Safari tip if on iOS
+if (isMobileSafari) {
+    const mobileTip = document.getElementById('mobile-safari-tip');
+    if (mobileTip) {
+        mobileTip.style.display = 'list-item';
+    }
+}
+
 // Connection handlers
 socket.on('connect', () => {
-    updateStatus('Connected to server', 'success');
+    updateStatus('Connected to server', 'connected');
 });
 
 socket.on('disconnect', () => {
-    updateStatus('Disconnected from server', 'danger');
+    updateStatus('Disconnected from server', 'error');
+    announcementToggle.classList.add('disabled');
 });
 
 socket.on('connected', (data) => {
     console.log(data.status);
+    announcementToggle.classList.remove('disabled');
 });
 
 // Announcement handlers
 socket.on('started', (data) => {
-    isRunning = true;
-    updateStatus(`Announcing ${data.ticker} every ${data.interval} seconds`, 'primary');
-    startBtn.disabled = true;
-    stopBtn.disabled = false;
+    isAnnouncing = true;
+    const intervalMinutes = Math.round(data.interval / 60);
+    updateStatus(`Announcing ${data.ticker} every ${intervalMinutes} minute${intervalMinutes !== 1 ? 's' : ''}`, 'connected');
+    announcementToggle.classList.add('active');
+    audioStatus.textContent = 'ON';
+    audioStatus.classList.remove('off');
+    audioStatus.classList.add('on');
     tickerInput.disabled = true;
-    intervalInput.disabled = true;
+    intervalSelect.disabled = true;
 });
 
 socket.on('stopped', (data) => {
-    isRunning = false;
-    updateStatus('Announcements stopped', 'info');
-    startBtn.disabled = false;
-    stopBtn.disabled = true;
+    isAnnouncing = false;
+    updateStatus('Announcements stopped', 'connected');
+    announcementToggle.classList.remove('active');
+    audioStatus.textContent = 'OFF';
+    audioStatus.classList.remove('on');
+    audioStatus.classList.add('off');
     tickerInput.disabled = false;
-    intervalInput.disabled = false;
+    intervalSelect.disabled = false;
     priceDisplay.style.display = 'none';
 });
 
@@ -65,56 +78,62 @@ socket.on('price_update', (data) => {
     tickerDisplay.textContent = data.ticker;
     priceValue.textContent = `$${data.price}`;
 
-    if (isMobileSafari && speechEnabled.checked) {
-        lastUpdate.textContent = `Last updated: ${new Date(data.timestamp * 1000).toLocaleTimeString()} - Tap to hear`;
+    const timeStr = new Date(data.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (isMobileSafari) {
+        lastUpdate.textContent = `Last updated: ${timeStr} - Tap to hear`;
         priceDisplay.style.cursor = 'pointer';
     } else {
-        lastUpdate.textContent = `Last updated: ${new Date(data.timestamp * 1000).toLocaleTimeString()}`;
+        lastUpdate.textContent = `Last updated: ${timeStr}`;
     }
 
     priceDisplay.style.display = 'block';
 
-    // Announce if enabled (will only work on desktop Safari, not mobile)
-    if (speechEnabled.checked && !isMobileSafari) {
-        console.log('Speech enabled, calling speak()');
+    // Announce (will only work on desktop, not mobile Safari)
+    if (!isMobileSafari) {
+        console.log('Calling speak()');
         speak(data.announcement);
-    } else if (isMobileSafari) {
-        console.log('Mobile Safari detected, waiting for user tap');
     } else {
-        console.log('Speech disabled, skipping announcement');
+        console.log('Mobile Safari detected, waiting for user tap');
     }
 });
 
 socket.on('error', (data) => {
-    updateStatus(`Error: ${data.message}`, 'danger');
+    updateStatus(`Error: ${data.message}`, 'error');
 });
 
-// Form handlers
-tickerForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    const ticker = tickerInput.value.trim().toUpperCase();
-    const interval = parseInt(intervalInput.value);
-
-    if (!ticker) {
-        alert('Please enter a ticker symbol');
+// Toggle button handler
+announcementToggle.addEventListener('click', () => {
+    if (announcementToggle.classList.contains('disabled')) {
         return;
     }
 
-    if (interval < 5) {
-        alert('Interval must be at least 5 seconds');
+    if (!isAnnouncing) {
+        startAnnouncements();
+    } else {
+        stopAnnouncements();
+    }
+});
+
+function startAnnouncements() {
+    const ticker = tickerInput.value.trim().toUpperCase();
+    const intervalMinutes = parseInt(intervalSelect.value);
+    const intervalSeconds = intervalMinutes * 60;
+
+    if (!ticker) {
+        updateStatus('Please enter a ticker symbol', 'error');
         return;
     }
 
     socket.emit('start_announcements', {
         ticker: ticker,
-        interval: interval
+        interval: intervalSeconds
     });
-});
+}
 
-stopBtn.addEventListener('click', () => {
+function stopAnnouncements() {
     socket.emit('stop_announcements');
-});
+}
 
 // Text-to-Speech function
 function speak(text) {
@@ -154,14 +173,22 @@ function speak(text) {
 
 // Status helper
 function updateStatus(message, type) {
-    statusDiv.textContent = message;
-    statusDiv.className = `alert alert-${type}`;
+    // Update message text
+    const messageSpan = statusDiv.querySelector('span:last-child');
+    if (messageSpan) {
+        messageSpan.textContent = message;
+    } else {
+        statusDiv.textContent = message;
+    }
+
+    // Update status class
+    statusDiv.className = `status-message ${type}`;
 }
 
 // Mobile Safari workaround - tap to play audio
 if (isMobileSafari) {
     priceDisplay.addEventListener('click', () => {
-        if (lastAnnouncement && speechEnabled.checked) {
+        if (lastAnnouncement) {
             console.log('Mobile tap detected, playing announcement');
             speak(lastAnnouncement);
         }

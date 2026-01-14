@@ -1,6 +1,6 @@
 [project]
 name = "stock-audible"
-version = "1.0.0"
+version = "1.1.0"
 description = "Stock Ticker Audio Announcer"
 authors = [
     {name = "Rich Dabrowski",email = "engineering@richd.net"}

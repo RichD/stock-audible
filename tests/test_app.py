@@ -24,24 +24,22 @@ def test_index_route_renders_template(client):
     response = client.get('/')
 
     # Check for key elements in the rendered HTML
-    assert b'Stock Ticker Audio Announcer' in response.data
+    assert b'STOCK AUDIBLE' in response.data or b'Stock Audible' in response.data
     assert b'ticker' in response.data.lower()
     assert b'interval' in response.data.lower()
 
 
 @pytest.mark.unit
 def test_index_route_includes_default_interval(client, app):
-    """Test that template receives default_interval value."""
+    """Test that template includes interval selector with default option."""
     response = client.get('/')
 
-    # The default interval should be present in the response
-    # (it's passed to the template and used in JavaScript)
     assert response.status_code == 200
 
-    # Check if the default interval value appears in the page
-    from config import Config
-    default_interval = str(Config.DEFAULT_INTERVAL)
-    assert default_interval.encode() in response.data
+    # Check that the interval selector exists with 5 minutes as default
+    assert b'interval-minutes' in response.data
+    assert b'selected' in response.data  # Should have a selected option
+    assert b'5 min' in response.data or b'value="5"' in response.data
 
 
 @pytest.mark.unit
