@@ -13,6 +13,12 @@ A web application that announces stock prices at specified intervals using text-
 - Configurable announcement intervals
 - Clean, simple web interface
 
+## Screenshot
+
+<p align="center">
+  <img src="static/screenshot.png" alt="Stock Audible Interface" width="600">
+</p>
+
 ## Setup
 
 1. Install dependencies:
