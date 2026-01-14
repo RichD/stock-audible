@@ -1,6 +1,6 @@
 [project]
 name = "stock-audible"
-version = "0.1.0"
+version = "1.0.0"
 description = "Stock Ticker Audio Announcer"
 authors = [
     {name = "Rich Dabrowski",email = "engineering@richd.net"}
@@ -14,6 +14,17 @@ dependencies = [
     "yfinance (>=1.0,<2.0)",
     "python-dotenv (>=1.2.1,<2.0.0)"
 ]
+
+
+[tool.poetry.group.test]
+optional = true
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.0.0"
+pytest-cov = "^4.1.0"
+pytest-flask = "^1.3.0"
+pytest-mock = "^3.12.0"
+freezegun = "^1.4.0"
 
 
 [build-system]
